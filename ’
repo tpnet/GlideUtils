@@ -3,6 +3,8 @@ Glide图片加载库的封装类
 占位符 不会覆盖CircleImageView，支持直接加载静态图、动态图到View，或者获取Bitmap，Drawable。加载普通图片可以加参数设置占位符和错误图
 
 加载Gif图片，带监听
+
+```Java
 GlideUtils.loadImageGif(mImageUrl, mImageView, new GlideUtils.ImageLoadListener() {
 
                 @Override
@@ -19,14 +21,15 @@ GlideUtils.loadImageGif(mImageUrl, mImageView, new GlideUtils.ImageLoadListener(
                     mFailLayout.setVisibility(View.VISIBLE);
                 }
             });
-
+```
 不带监听就设置把监听属性设置我为null;
 
 
 加载静态图片
+```Java
 GlideUtils.loadImage( mImageUrl, mImageView, new GlideUtils.ImageLoadListener() {
 
-                @Override
+              @Override
                 public <T, K> void onLoadingComplete(T uri, ImageView view, K resource) {
                     progressBar.setVisibility(View.GONE);
                     mEntry.setIsDownload(true);
@@ -42,9 +45,10 @@ GlideUtils.loadImage( mImageUrl, mImageView, new GlideUtils.ImageLoadListener() 
                     mFailLayout.setVisibility(View.VISIBLE);
                 }
             });
-
+```
 
 获取Drawable
+```Java
 GlideUtils.loadImage(this, mImageUrl, new GlideUtils.ImageLoadListener() {
                 @Override
                 public <T, K> void onLoadingComplete(T uri, ImageView view, K resource) {
@@ -57,7 +61,7 @@ GlideUtils.loadImage(this, mImageUrl, new GlideUtils.ImageLoadListener() {
                 }
             });
             
-
+```
 其他等等
 
 
