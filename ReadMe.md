@@ -62,6 +62,20 @@ GlideUtils.loadImage(this, mImageUrl, new GlideUtils.ImageLoadListener() {
             });
             
 ```
+
+重要一点，在多图片的界面destory之后，在onDestory回调方法调用
+```Java
+   @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        GlideUtils.clearMemory(this);
+        System.gc();
+    }
+
+```
+
+
+
 其他等等
 
 
