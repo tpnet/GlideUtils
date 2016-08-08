@@ -1,4 +1,4 @@
-# GlideUtil
+# GlideUtils
 Glide图片加载库的封装类
 占位符 不会覆盖CircleImageView，支持直接加载静态图、动态图到View，或者获取Bitmap，Drawable。加载普通图片可以加参数设置占位符和错误图
 
