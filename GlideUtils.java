@@ -31,7 +31,7 @@ public abstract class GlideUtils {
          *
          * @param uri      图片url 或资源id 或 文件
          * @param view     目标载体，不传则为空
-         * @param resource 返回的资源,GlideDrawable或者Bitmap或者GifDrawable,ImageView.setImageRecouru设置
+         * @param resource 返回的资源,GlideDrawable或者Bitmap或者GifDrawable,ImageView.setImageRecourse设置
          */
         <T, K> void onLoadingComplete(T uri, ImageView view, K resource);
 
@@ -53,30 +53,33 @@ public abstract class GlideUtils {
      * @param url     图片连接
      * @param <T>     Context类型
      * @param <K>     url类型
-     * @return 返回DrawableTypeRequest<K> 类型
+     * @return 返回DrawableTypeRequst<K> 类型
      */
     private static <T, K> DrawableTypeRequest<K> getContext(T context, K url) {
         DrawableTypeRequest<K> type = null;
-        if (context instanceof Activity) {
-            type = Glide.with((Activity) context).load(url);
-        } else if (context instanceof android.support.v4.app.Fragment) {
+        if (context instanceof android.support.v4.app.Fragment) {
             type = Glide.with((android.support.v4.app.Fragment) context).load(url);
         } else if (context instanceof android.app.Fragment) {
             type = Glide.with((android.app.Fragment) context).load(url);
-        } else if (context instanceof Context) {
+        } else  if (context instanceof Activity) {    //包括FragmentActivity
+            type = Glide.with((Activity) context).load(url);
+        }else if (context instanceof Context) {
             type = Glide.with((Context) context).load(url);
-        } else if (context instanceof android.support.v4.app.FragmentActivity) {
-            type = Glide.with((android.support.v4.app.FragmentActivity) context).load(url);
         }
         return type;
     }
 
+
+
+
+
+
     /**
      * 图片加载监听类
      *
-     * @param <T> 图片链接格式
+     * @param <T> 图片链接 的类型
      * @param <K> 图片资源返回类型
-     * @param <Z> 返回的图片url格式
+     * @param <Z> 返回的图片url
      */
     private static class GlideListener<T, K, Z> implements RequestListener<T, K> {
 
@@ -108,6 +111,7 @@ public abstract class GlideUtils {
                     imageLoadListener.onLoadingComplete(url, null, resource);
                 }
             }
+
             return false;
         }
 
@@ -119,9 +123,6 @@ public abstract class GlideUtils {
             return false;
         }
     }
-
-
-
 
 
 
@@ -173,6 +174,8 @@ public abstract class GlideUtils {
                 .load(file)
                 .listener(new GlideListener<File, GlideDrawable, File>(imageLoadListener, file, imageView))
                 .into(imageView);
+
+
     }
 
     /**
@@ -288,9 +291,49 @@ public abstract class GlideUtils {
      *
      * @param context 上下文
      */
-    public void clearMemory(Context context) {
+    public static void clearMemory(Context context) {
         Glide.get(context).clearMemory();
     }
 
+
+    /**
+     * 取消所有正在下载或等待下载的任务。
+     * @param context  上下文
+     */
+    public static void cancelAllTasks(Context context) {
+        Glide.with(context).pauseRequests();
+    }
+
+    /**
+     *
+     * 恢复所有任务
+     */
+    public static void resumeAllTasks(Context context) {
+        Glide.with(context).resumeRequests();
+    }
+
+    /**
+     * 清除磁盘缓存
+     *
+     * @param context 上下文
+     */
+    public static void clearDiskCache(final Context context) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Glide.get(context).clearDiskCache();
+            }
+        }).start();
+    }
+
+
+    /**
+     * 清除所有缓存
+     * @param context 上下文
+     */
+    public static void cleanAll(Context context) {
+        clearDiskCache(context);
+        clearMemory(context);
+    }
 
 }
