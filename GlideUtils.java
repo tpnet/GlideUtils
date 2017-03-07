@@ -23,13 +23,18 @@ import com.minstone.view.CircleImageView;
 import java.io.File;
 
 /**
+ * Glide封装类
  * Created by litp on 2016/8/6.
  */
 public abstract class GlideUtils {
 
 
-    //图片加载监听器
-    public abstract interface ImageLoadListener {
+    /**
+     * 简单图片加载回调
+     * @param <T>  图片url 或资源id 或 文件
+     * @param <K>  返回的资源,GlideDrawable或者Bitmap或者GifDrawable,ImageView.setImageRecourse设置
+     */
+    public  interface ImageLoadListener<T, K> {
 
         /**
          * 图片加载成功回调
@@ -38,20 +43,25 @@ public abstract class GlideUtils {
          * @param view     目标载体，不传则为空
          * @param resource 返回的资源,GlideDrawable或者Bitmap或者GifDrawable,ImageView.setImageRecourse设置
          */
-        <T, K> void onLoadingComplete(T uri, ImageView view, K resource);
+        void onLoadingComplete(T uri, ImageView view, K resource);
 
         /**
          * 图片加载异常返回
          *
-         * @param source   图片地址、File、资源id
-         * @param e 异常信息
+         * @param source 图片地址、File、资源id
+         * @param e      异常信息
          */
-        <T> void onLoadingError(T source, Exception e);
+        void onLoadingError(T source, Exception e);
 
     }
 
 
-    public abstract interface ImageLoadDetailListener {
+    /**
+     * 详细加载图片加载回调
+     * @param <T>  图片url 或资源id 或 文件
+     * @param <K>  返回的资源
+     */
+    public interface ImageLoadDetailListener<T, K>  {
 
         /**
          * 图片加载成功回调
@@ -60,17 +70,23 @@ public abstract class GlideUtils {
          * @param view     目标载体，不传则为空
          * @param resource 返回的资源,GlideDrawable或者Bitmap或者GifDrawable,ImageView.setImageRecourse设置
          */
-        <T, K> void onLoadingComplete(T uri, ImageView view, K resource);
+        void onLoadingComplete(T uri, ImageView view, K resource);
 
         /**
          * 图片加载异常返回
          *
-         * @param source   图片地址、File、资源id
-         * @param e 异常信息
+         * @param source 图片地址、File、资源id
+         * @param errorDrawable 加载错误占位图
+         * @param e      异常信息
          */
-        <T> void onLoadingError(T source, Exception e);
+        void onLoadingError(T source, Drawable errorDrawable,Exception e);
 
-        <T> void onLoadingStart(T source);
+        /**
+         * 加载开始
+         * @param source 图片来源
+         * @param placeHolder 开始加载占位图
+         */
+        void onLoadingStart(T source,Drawable placeHolder);
 
     }
 
@@ -86,7 +102,7 @@ public abstract class GlideUtils {
      */
     private static <T, K> DrawableTypeRequest<K> getContext(T context, K url) {
         DrawableTypeRequest<K> type = null;
-        try{
+        try {
             if (context instanceof android.support.v4.app.Fragment) {
                 type = Glide.with((android.support.v4.app.Fragment) context).load(url);
             } else if (context instanceof android.app.Fragment) {
@@ -96,7 +112,7 @@ public abstract class GlideUtils {
             } else if (context instanceof Context) {
                 type = Glide.with((Context) context).load(url);
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             LogUtil.e("Glide的Context错误");
         }
@@ -114,17 +130,17 @@ public abstract class GlideUtils {
      */
     private static class GlideListener<T, K, Z> implements RequestListener<T, K> {
 
-        ImageLoadListener imageLoadListener = null;
+        ImageLoadListener<Z,K> imageLoadListener = null;
         Z url;
         ImageView imageView = null;
 
-        GlideListener(ImageLoadListener imageLoadListener, Z url, ImageView view) {
+        GlideListener(ImageLoadListener<Z,K> imageLoadListener, Z url, ImageView view) {
             this.imageLoadListener = imageLoadListener;
             this.url = url;
             this.imageView = view;
         }
 
-        GlideListener(ImageLoadListener imageLoadListener, Z url) {
+        GlideListener(ImageLoadListener<Z,K> imageLoadListener, Z url) {
             this.imageLoadListener = imageLoadListener;
             this.url = url;
         }
@@ -139,7 +155,6 @@ public abstract class GlideUtils {
                 if (imageView != null) {
                     imageLoadListener.onLoadingComplete(url, imageView, resource);
                 } else {
-                    LogUtil.e("加载完成回调");
                     imageLoadListener.onLoadingComplete(url, null, resource);
                 }
             }
@@ -149,6 +164,9 @@ public abstract class GlideUtils {
 
         @Override
         public boolean onException(Exception e, T model, Target<K> target, boolean isFirstResource) {
+
+            LogUtil.e("Glide图片加载失败:"+e + " 地址为:"+url);
+
             if (imageLoadListener != null) {
                 imageLoadListener.onLoadingError(url, e);
             }
@@ -164,9 +182,9 @@ public abstract class GlideUtils {
      * @param file              文件File
      * @param imageLoadListener 回调监听器
      */
-    public static <T> void loadImage(T context, final File file, final ImageLoadListener imageLoadListener) {
+    public static <T> void loadImage(T context, File file, ImageLoadListener<File,GlideDrawable> imageLoadListener) {
         DrawableTypeRequest<File> type = getContext(context, file);
-        if(type != null){
+        if (type != null) {
             type.listener(new GlideListener<File, GlideDrawable, File>(imageLoadListener, file));
         }
     }
@@ -178,9 +196,9 @@ public abstract class GlideUtils {
      * @param resourceId        资源id
      * @param imageLoadListener 回调监听器
      */
-    public static <T> void loadImage(T context, final int resourceId, final ImageLoadListener imageLoadListener) {
+    public static <T> void loadImage(T context, int resourceId, ImageLoadListener<Integer, GlideDrawable> imageLoadListener) {
         DrawableTypeRequest<Integer> type = getContext(context, resourceId);
-        if(type != null){
+        if (type != null) {
             type.listener(new GlideListener<Integer, GlideDrawable, Integer>(imageLoadListener, resourceId));
         }
 
@@ -193,9 +211,9 @@ public abstract class GlideUtils {
      * @param url               图片url
      * @param imageLoadListener 回调监听器
      */
-    public static <T> void loadImage(T context, final String url, final ImageLoadListener imageLoadListener) {
+    public static <T> void loadImage(T context, final String url, ImageLoadListener<String, GlideDrawable> imageLoadListener) {
         DrawableTypeRequest<String> type = getContext(context, url);
-        if(type != null){
+        if (type != null) {
             type.listener(new GlideListener<String, GlideDrawable, String>(imageLoadListener, url));
         }
 
@@ -207,9 +225,12 @@ public abstract class GlideUtils {
      * @param file      文件File
      * @param imageView 要显示到的图片ImageView
      */
-    public static void loadImage(final File file, final ImageView imageView, final ImageLoadListener imageLoadListener) {
+    public static void loadImage(final File file, ImageView imageView, ImageLoadListener<File, GlideDrawable> imageLoadListener) {
         Glide.with(imageView.getContext())
                 .load(file)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)//禁用磁盘缓存
+                .skipMemoryCache(true)//跳过内存缓存
+                .dontAnimate()
                 .listener(new GlideListener<File, GlideDrawable, File>(imageLoadListener, file, imageView))
                 .into(imageView);
     }
@@ -220,7 +241,7 @@ public abstract class GlideUtils {
      * @param resourceId 资源id
      * @param imageView  图片View
      */
-    public static void loadImage(final int resourceId, final ImageView imageView, final ImageLoadListener imageLoadListener) {
+    public static void loadImage(int resourceId, ImageView imageView, ImageLoadListener<Integer, GlideDrawable> imageLoadListener) {
         Glide.with(imageView.getContext())
                 .load(resourceId)
                 .listener(new GlideListener<Integer, GlideDrawable, Integer>(imageLoadListener, resourceId, imageView))
@@ -236,7 +257,7 @@ public abstract class GlideUtils {
      * @param imageLoadListener 加载回调监听器
      * @param parms             设置占位符和加载失败图片
      */
-    public static void loadCircleImage(final String url, final ImageView imageView, final ImageLoadListener imageLoadListener, final int... parms) {
+    public static void loadCircleImage( String url,  ImageView imageView, ImageLoadListener<String, GlideDrawable> imageLoadListener, int... parms) {
         DrawableTypeRequest<String> type = Glide.with(imageView.getContext()).load(url);
         if (parms != null && parms.length > 0) {
             type.placeholder(parms[0]);   //占位符
@@ -258,9 +279,9 @@ public abstract class GlideUtils {
      * @param imageLoadListener 图片加载回调
      * @param parms             第一个是error的图片
      */
-    public static <T> void loadImage(T context,final String url, final ImageView imageView, final ImageLoadListener imageLoadListener, final int... parms) {
-        DrawableTypeRequest<String> type = getContext(context,url);
-        if(type != null){
+    public static <T> void loadImage(T context, String url, ImageView imageView, ImageLoadListener<String, GlideDrawable> imageLoadListener, int... parms) {
+        DrawableTypeRequest<String> type = getContext(context, url);
+        if (type != null) {
             type.asBitmap();
             if (parms != null && parms.length > 0) {
                 type.placeholder(parms[0]);   //占位符
@@ -293,13 +314,13 @@ public abstract class GlideUtils {
     }
 
 
-    public static <T> void loadImageDetail(final T context, final String url, final ImageView imageView, final Drawable drawable, final ImageLoadDetailListener imageLoadListener) {
+    public static <T> void loadImageDetail(final T context, final String url, final ImageView imageView, final Drawable drawable, final ImageLoadDetailListener<String, GlideDrawable> imageLoadListener) {
         DrawableTypeRequest<String> type = getContext(context, url);
-        if(type != null){
+        if (type != null) {
             type.into(new SimpleTarget<GlideDrawable>() {
                 @Override
                 public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
-                    if(imageView != null && resource != null){
+                    if (imageView != null && resource != null) {
                         imageView.setImageDrawable(resource);
                     }
                     if (imageLoadListener != null) {
@@ -311,7 +332,7 @@ public abstract class GlideUtils {
                 @Override
                 public void onStart() {
                     super.onStart();
-                    if(drawable != null && imageView != null){
+                    if (drawable != null && imageView != null) {
                         imageView.setImageDrawable(drawable);
                     }
 
@@ -321,7 +342,7 @@ public abstract class GlideUtils {
                 public void onLoadStarted(Drawable placeholder) {
                     super.onLoadStarted(placeholder);
                     if (imageLoadListener != null) {
-                        imageLoadListener.onLoadingStart(placeholder);
+                        imageLoadListener.onLoadingStart(url,placeholder);
                     }
 
                 }
@@ -330,7 +351,7 @@ public abstract class GlideUtils {
                 public void onLoadFailed(Exception e, Drawable errorDrawable) {
                     super.onLoadFailed(e, errorDrawable);
                     if (imageLoadListener != null) {
-                        imageLoadListener.onLoadingError(errorDrawable, e);
+                        imageLoadListener.onLoadingError(url,errorDrawable, e);
                     }
                 }
             });
@@ -347,9 +368,9 @@ public abstract class GlideUtils {
      * @param imageLoadListener 图片加载监听器
      * @param <T>               上下文类型
      */
-    public static <T> void loadImageBitmap(T context, final String url, final ImageLoadListener imageLoadListener) {
+    public static <T> void loadImageBitmap(T context, String url, ImageLoadListener<String, Bitmap> imageLoadListener) {
         DrawableTypeRequest<String> type = getContext(context, url);
-        if(type != null){
+        if (type != null) {
             type.asBitmap().listener(new GlideListener<String, Bitmap, String>(imageLoadListener, url));
         }
     }
@@ -362,15 +383,15 @@ public abstract class GlideUtils {
      * @param url               图片url
      * @param imageLoadListener 图片加载监听器
      */
-    public static <T> void loadImageGif(T context, final String url, final ImageLoadListener imageLoadListener) {
+    public static <T> void loadImageGif(T context, String url, ImageLoadListener<String, GifDrawable> imageLoadListener) {
         DrawableTypeRequest<String> type = getContext(context, url);
-        if(type != null){
+        if (type != null) {
             type.asGif()
                     .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                     .listener(new GlideListener<String, GifDrawable, String>(imageLoadListener, url));
 
         }
-}
+    }
 
 
     /**
@@ -379,8 +400,8 @@ public abstract class GlideUtils {
      * @param url               图片url
      * @param imageLoadListener 图片加载监听器
      */
-    public static void loadImageGifThum(final String url, ImageView imageView, final ImageLoadListener imageLoadListener, Drawable drawable) {
-        if(drawable != null){
+    public static void loadImageGifThum( String url, ImageView imageView,  ImageLoadListener<String, Bitmap> imageLoadListener, Drawable drawable) {
+        if (drawable != null) {
             imageView.setImageDrawable(drawable);
         }
         DrawableTypeRequest<String> type = Glide.with(imageView.getContext()).load(url);
@@ -398,7 +419,7 @@ public abstract class GlideUtils {
      * @param imageView         图片View
      * @param imageLoadListener 图片加载监听器
      */
-    public static void loadImageGif(final String url, final ImageView imageView, final ImageLoadListener imageLoadListener) {
+    public static void loadImageGif( String url, ImageView imageView, ImageLoadListener<String, GifDrawable> imageLoadListener) {
         DrawableTypeRequest<String> type = Glide.with(imageView.getContext()).load(url);
         type.asGif()
                 .diskCacheStrategy(DiskCacheStrategy.SOURCE)
