@@ -4,7 +4,12 @@ Glide图片加载库的封装类
 
 普通加载图片(支持CircleImageView)：
 ```
-GlideUtils.loadImage(this, url, imageview, null);
+
+GlideUtils.loadImage(url, imageview);
+
+//GlideUtils.loadImage(this, url, imageview, null);
+
+
 
 ```
 需要添加占位图和错误图在后面加：
